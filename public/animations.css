@@ -1,0 +1,145 @@
+/* ═══════════════════════════════════════════════════════════
+   Micro-animaciones
+   Sutiles y rápidas (150–400 ms). Se desactivan con
+   "reducir movimiento" del sistema (ver final del archivo).
+═══════════════════════════════════════════════════════════ */
+
+:root {
+  --ease-out:    cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.messages { scroll-behavior: auto; }
+
+/* ─── Entradas ──────────────────────────────────────────────── */
+
+@keyframes rise     { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fade     { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in   { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes slide-l  { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+@keyframes bubble   { from { opacity: 0; transform: translateY(8px) scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes float    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Mensajes */
+.msg-assistant, .msg-notice { animation: rise .4s var(--ease-out) both; }
+.msg-user .bubble { transform-origin: 100% 100%; animation: bubble .32s var(--ease-spring) both; }
+.msg-user .msg-time { animation: fade .4s .15s both; }
+
+/* Cajas, tablas y código aparecen con un leve retraso escalonado */
+/* (solo cuando el mensaje terminó: durante el streaming se re-renderiza en cada cuadro) */
+.msg:not(.is-streaming) .msg-content .callout,
+.msg:not(.is-streaming) .msg-content .code-block,
+.msg:not(.is-streaming) .msg-content .table-wrap { animation: rise .45s var(--ease-out) both; }
+
+/* Bienvenida */
+.welcome-logo { animation: float 5s ease-in-out infinite; }
+.welcome h1   { animation: rise .6s .05s var(--ease-out) both; }
+.welcome p    { animation: rise .6s .12s var(--ease-out) both; }
+.suggest      { animation: rise .55s var(--ease-out) both; }
+.suggest:nth-child(1) { animation-delay: .18s; }
+.suggest:nth-child(2) { animation-delay: .24s; }
+.suggest:nth-child(3) { animation-delay: .30s; }
+.suggest:nth-child(4) { animation-delay: .36s; }
+
+/* Lista de chats */
+.chat-item.enter { animation: slide-l .35s var(--ease-out) both; }
+.chat-item::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 3px; height: 0; border-radius: 3px;
+  background: var(--text); transform: translateY(-50%); transition: height .25s var(--ease-out);
+}
+.chat-item.active::before { height: 16px; }
+.chat-link { transition: color .15s, transform .2s var(--ease-out); }
+.chat-item:hover .chat-link { transform: translateX(2px); }
+.chat-acts { animation: fade .15s both; }
+
+/* ─── Interacción ───────────────────────────────────────────── */
+
+.btn, .icon-btn, .btn-new, .act-btn, .copy-btn, .sb-item, .suggest, .seg button, .pop-item, .model-chip, .modal-nav button, .theme-cards button {
+  transition: background .15s, border-color .15s, color .15s, transform .15s var(--ease-out), box-shadow .2s;
+}
+.btn:active, .icon-btn:active, .btn-new:active, .act-btn:active, .copy-btn:active, .sb-item:active, .model-chip:active, .seg button:active { transform: scale(.96); }
+
+.suggest:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.suggest:active { transform: translateY(0) scale(.99); }
+.theme-cards button:hover { transform: translateY(-2px); }
+.theme-cards button:active { transform: scale(.98); }
+.btn-new .ico { transition: transform .25s var(--ease-spring); }
+.btn-new:hover .ico { transform: rotate(90deg); }
+#settingsBtn:hover .ico { transform: rotate(60deg); }
+#settingsBtn .ico { transition: transform .35s var(--ease-out); }
+
+/* Botón enviar: aparece con rebote y la flecha se desliza */
+.send-btn { transition: opacity .2s, transform .2s var(--ease-spring), background .15s; }
+.send-btn:not(:disabled) { animation: pop-in .25s var(--ease-spring); }
+.send-btn:hover:not(:disabled) .ico { transform: translateY(-2px); }
+.send-btn .ico { transition: transform .2s var(--ease-out); }
+.send-btn:active:not(:disabled) { transform: scale(.9); }
+.send-btn.stop { animation: pop-in .25s var(--ease-spring), pulse-ring 1.6s 0.25s ease-out infinite; }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--text) 35%, transparent); } 100% { box-shadow: 0 0 0 10px transparent; } }
+
+/* Compositor */
+.composer-box { transition: border-color .2s, box-shadow .25s var(--ease-out), transform .25s var(--ease-out); }
+.composer-box:focus-within { transform: translateY(-1px); }
+
+/* Selector de modelo */
+.model-chip .ico-wrap { transition: transform .25s var(--ease-out); }
+.model-chip.open .ico-wrap { transform: rotate(180deg); }
+.model-pop { transform-origin: 0 100%; animation: pop-in .2s var(--ease-out); }
+.pop-item { transition: background .12s, color .12s, padding-left .15s var(--ease-out); }
+.pop-item:hover { padding-left: 14px; }
+.pop-item.on .ico { animation: pop-in .25s var(--ease-spring); }
+.pop-tabs button { transition: background .15s, color .15s, box-shadow .15s; }
+.chip-dot, .kd { transition: background .3s; }
+
+/* Menú de comandos */
+.cmd-menu { transform-origin: 50% 100%; animation: pop-in .16s var(--ease-out); }
+.cmd-item { transition: background .1s, padding-left .15s var(--ease-out); }
+.cmd-item.active { padding-left: 14px; }
+
+/* Tema */
+#themeIco.spin { animation: spin-pop .5s var(--ease-spring); }
+@keyframes spin-pop { 0% { transform: rotate(-90deg) scale(.4); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+/* Copiar: la marca aparece con rebote */
+.copy-btn.ok .ico, .act-btn.ok .ico { animation: pop-in .3s var(--ease-spring); }
+
+/* ─── Modales y paneles ─────────────────────────────────────── */
+
+.modal { animation: fade .2s ease-out both; }
+.modal-card { animation: pop-in .28s var(--ease-out) both; }
+.modal-body section:not([hidden]) { animation: rise .3s var(--ease-out) both; }
+.key-card, .switch-row, .radio-list label { transition: border-color .2s, background .2s; }
+.key-card:focus-within { border-color: var(--border-2); }
+.radio-list label:hover { background: var(--hover); }
+.badge { transition: color .25s, background .25s, border-color .25s; }
+.badge.ok, .badge.bad { animation: pop-in .3s var(--ease-spring); }
+.switch { transition: background .25s; }
+.switch::after { transition: transform .3s var(--ease-spring), background .2s; }
+.overlay.show { animation: fade .2s both; }
+.lock-ico { animation: pop-in .4s var(--ease-spring); }
+
+/* ─── Consola ───────────────────────────────────────────────── */
+
+.console:not([hidden]) { animation: sheet-up .3s var(--ease-out); }
+.log { animation: fade .25s both; }
+.log-error, .log-warn { animation: fade .25s both, flash .9s ease-out; }
+@keyframes flash { 0% { background: color-mix(in srgb, currentColor 22%, transparent); } }
+.log-error { --flash: var(--red); }
+.live i { transition: background .3s; }
+.seg button.on { transition: background .2s, box-shadow .2s, color .2s; }
+
+/* ─── Varios ────────────────────────────────────────────────── */
+
+.chat-title { animation: fade .3s both; }
+.status-dot { transition: background .3s; }
+.thinking i { animation-duration: 1s; }
+.cursor { transition: none; }
+
+@media (max-width: 860px) {
+  .modal-card:not(.narrow) { animation: sheet-up .32s var(--ease-out) both; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunstar · ChatBot AI</title>
+  <link rel="icon" type="image/svg+xml" href="logo-light.svg" />
+
+  <!-- Aplica el tema antes de pintar (evita el parpadeo) -->
+  <script>
+    (function () {
+      try {
+        var pref = localStorage.getItem('theme') || 'system';
+        var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
+  <link id="hljs-dark"  rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="animations.css" />
+  <link rel="stylesheet" href="features.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SIDEBAR: chats ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="brand">
+        <img class="logo logo-for-light" src="logo-light.svg" alt="" width="26" height="26" />
+        <img class="logo logo-for-dark"  src="logo-dark.svg"  alt="" width="26" height="26" />
+        <span class="brand-text"><span class="brand-name">Sunstar</span><span class="brand-sub">ChatBot AI</span></span>
+      </div>
+      <button class="icon-btn only-mobile" id="sbClose" title="Cerrar" aria-label="Cerrar menú"><i data-ico="x"></i></button>
+    </div>
+
+    <button class="btn-new" id="newChatBtn"><i data-ico="plus"></i><span>Nuevo chat</span></button>
+
+    <label class="sb-search">
+      <i data-ico="search" data-size="14"></i>
+      <input type="text" id="chatSearch" placeholder="Buscar chats" autocomplete="off" spellcheck="false" />
+    </label>
+
+    <nav class="chat-list" id="chatList" aria-label="Conversaciones"></nav>
+
+    <div class="sb-foot">
+      <button class="sb-item" id="settingsBtn"><i data-ico="settings"></i><span>Configuración</span></button>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main">
+
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="hamburger" aria-label="Menú"><i data-ico="menu"></i></button>
+      <h2 class="chat-title" id="chatTitle">Nueva conversación</h2>
+      <button class="icon-btn" id="consoleBtn" title="Consola de depuración"><i data-ico="terminal"></i></button>
+      <button class="icon-btn" id="themeBtn" title="Cambiar tema"><i data-ico="sun" id="themeIco"></i></button>
+    </header>
+
+    <div class="messages" id="messages"></div>
+
+    <!-- Consola -->
+    <section class="console" id="console" hidden>
+      <div class="console-resize" id="consoleResize" title="Arrastra para cambiar el tamaño"></div>
+      <div class="console-head">
+        <div class="console-title"><i data-ico="terminal" data-size="14"></i><span>Logs</span></div>
+        <span class="live" id="liveBadge"><i></i><b id="liveTxt">Inactivo</b></span>
+        <div class="seg" id="logFilter" role="group" aria-label="Filtrar">
+          <button data-f="all" class="on">Todo</button>
+          <button data-f="warn">Avisos</button>
+          <button data-f="error">Errores</button>
+        </div>
+        <span class="spacer"></span>
+        <button class="icon-btn sm" id="consoleCheck" title="Verificar API key"><i data-ico="key" data-size="14"></i></button>
+        <button class="icon-btn sm" id="consoleCopy"  title="Copiar logs"><i data-ico="copy" data-size="14"></i></button>
+        <button class="icon-btn sm" id="consoleClear" title="Limpiar"><i data-ico="trash" data-size="14"></i></button>
+        <button class="icon-btn sm" id="consoleClose" title="Cerrar"><i data-ico="x" data-size="14"></i></button>
+      </div>
+      <div class="console-body" id="consoleBody" role="log"></div>
+    </section>
+
+    <!-- Compositor -->
+    <div class="composer">
+      <div class="cmd-menu" id="cmdMenu" hidden></div>
+      <div class="composer-box">
+        <textarea id="userInput" placeholder="Escribe un mensaje..." rows="1"></textarea>
+        <div class="composer-bar">
+          <div class="model-picker">
+            <button class="model-chip" id="modelBtn" type="button" aria-haspopup="listbox">
+              <span class="chip-dot" id="chipDot"></span>
+              <span class="chip-prov" id="chipProv">Claude</span>
+              <span class="chip-model" id="chipModel">modelo</span>
+              <i data-ico="chevron-down" data-size="14"></i>
+            </button>
+            <div class="model-pop" id="modelPop" hidden></div>
+          </div>
+          <span class="status" id="status"><i class="status-dot" id="statusDot"></i><span id="statusTxt">Listo</span></span>
+          <span class="spacer"></span>
+          <span class="kbd-hint">Enter envía · <kbd>/</kbd> comandos</span>
+          <button class="send-btn" id="sendBtn" disabled aria-label="Enviar"><i data-ico="arrow-up" data-size="16"></i></button>
+          <button class="send-btn stop" id="stopBtn" hidden aria-label="Detener"><i data-ico="stop" data-size="14"></i></button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- ═══ CONFIGURACIÓN ═══ -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="Configuración">
+    <aside class="modal-nav">
+      <h3>Configuración</h3>
+      <button data-tab="appearance" class="on"><i data-ico="palette"></i>Apariencia</button>
+      <button data-tab="security"><i data-ico="shield"></i>Seguridad</button>
+      <button data-tab="model"><i data-ico="sliders"></i>Modelo</button>
+      <button data-tab="data"><i data-ico="database"></i>Datos</button>
+    </aside>
+
+    <div class="modal-body">
+      <button class="icon-btn modal-x" id="settingsClose" aria-label="Cerrar"><i data-ico="x"></i></button>
+
+      <!-- Apariencia -->
+      <section data-pane="appearance">
+        <h4>Apariencia</h4>
+        <p class="muted">Elige entre el modo claro y el oscuro, o sigue el del sistema.</p>
+        <div class="theme-cards" id="themeCards">
+          <button data-pref="light"><span class="swatch swatch-light"></span><span class="tc-label"><i data-ico="sun" data-size="14"></i>Claro</span></button>
+          <button data-pref="dark"><span class="swatch swatch-dark"></span><span class="tc-label"><i data-ico="moon" data-size="14"></i>Oscuro</span></button>
+          <button data-pref="system"><span class="swatch swatch-system"></span><span class="tc-label"><i data-ico="monitor" data-size="14"></i>Sistema</span></button>
+        </div>
+        <label class="switch-row">
+          <span><b>Formato enriquecido</b><small>El bot usa cajas destacadas, texto en color y resaltado.</small></span>
+          <input type="checkbox" id="colorsToggle" class="switch" />
+        </label>
+      </section>
+
+      <!-- Seguridad -->
+      <section data-pane="security" hidden>
+        <h4>Seguridad</h4>
+        <p class="muted">Las API keys viajan de tu navegador a este servidor local solo para reenviarse al proveedor. El servidor no las guarda ni las registra.</p>
+
+        <div class="key-cards" id="keyCards"></div>
+
+        <h5>Dónde guardar las keys</h5>
+        <div class="radio-list" id="storageModes">
+          <label><input type="radio" name="vaultMode" value="session" /><span><b>Solo esta sesión</b><small>Se borran al cerrar la pestaña. Lo más seguro, pero hay que pegarlas cada vez.</small></span></label>
+          <label><input type="radio" name="vaultMode" value="device" /><span><b>Este dispositivo</b><small>Guardadas sin cifrar en el navegador. Cómodo, pero visibles para quien use tu equipo.</small></span></label>
+          <label><input type="radio" name="vaultMode" value="locked" /><span><b>Protegidas con contraseña</b><small>Cifradas con AES-256. Se piden al abrir la app. Si olvidas la contraseña, hay que volver a pegarlas.</small></span></label>
+        </div>
+        <div class="pass-row" id="passRow" hidden>
+          <input type="password" class="field" id="vaultPass" placeholder="Contraseña (mínimo 6 caracteres)" autocomplete="new-password" />
+          <button class="btn primary" id="vaultApply">Cifrar y guardar</button>
+        </div>
+        <p class="muted small" id="vaultMsg"></p>
+
+        <button class="btn danger" id="wipeKeys"><i data-ico="trash" data-size="14"></i>Borrar todas las keys</button>
+      </section>
+
+      <!-- Modelo -->
+      <section data-pane="model" hidden>
+        <h4>Modelo</h4>
+        <p class="muted">El modelo se elige en el chat, junto al campo de texto. Aquí ajustas su comportamiento.</p>
+
+        <label class="lbl">Rol</label>
+        <select class="field" id="roleSelect"></select>
+
+        <label class="lbl">Instrucciones propias (prompt de sistema)</label>
+        <textarea class="field" id="systemInput" rows="4" placeholder="Ej.: Responde siempre en español y de forma breve."></textarea>
+
+        <label class="lbl">Temperatura <b id="tempVal">por defecto</b></label>
+        <div class="temp-row">
+          <input type="range" id="tempRange" min="0" max="1" step="0.05" value="0.7" />
+          <label class="check"><input type="checkbox" id="tempDefault" /><span>Usar el valor del modelo</span></label>
+        </div>
+      </section>
+
+      <!-- Datos -->
+      <section data-pane="data" hidden>
+        <h4>Datos</h4>
+        <p class="muted">Tus chats se guardan en este navegador. Puedes exportar el chat actual o borrar todo.</p>
+        <label class="lbl">Exportar chat actual</label>
+        <div class="btn-row">
+          <button class="btn" data-export="md"><i data-ico="download" data-size="14"></i>Markdown</button>
+          <button class="btn" data-export="json"><i data-ico="download" data-size="14"></i>JSON</button>
+          <button class="btn" data-export="html"><i data-ico="download" data-size="14"></i>HTML</button>
+        </div>
+        <label class="lbl">Zona de peligro</label>
+        <button class="btn danger" id="wipeChats"><i data-ico="trash" data-size="14"></i>Borrar todos los chats</button>
+        <p class="muted small" id="chatsCount"></p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DESBLOQUEO ═══ -->
+<div class="modal" id="lockModal" hidden>
+  <div class="modal-card narrow" role="dialog" aria-modal="true" aria-label="Desbloquear keys">
+    <div class="lock-body">
+      <div class="lock-ico"><i data-ico="lock" data-size="22"></i></div>
+      <h4>Keys protegidas</h4>
+      <p class="muted">Escribe tu contraseña para descifrar tus API keys.</p>
+      <input type="password" class="field" id="unlockPass" placeholder="Contraseña" autocomplete="current-password" />
+      <p class="err small" id="unlockErr"></p>
+      <div class="btn-row">
+        <button class="btn primary" id="unlockBtn">Desbloquear</button>
+        <button class="btn" id="unlockSkip">Continuar sin keys</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script src="providers.js"></script>
+<script src="registry.js"></script>
+<script src="theme.js"></script>
+<script src="store.js"></script>
+<script src="commands.js"></script>
+<!-- Extensiones: se registran en Ext antes de que arranque app.js -->
+<script src="diagrams.js"></script>
+<script src="questions.js"></script>
+<script src="whiteboard.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
